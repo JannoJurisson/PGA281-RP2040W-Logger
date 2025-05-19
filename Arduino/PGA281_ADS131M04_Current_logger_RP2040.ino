@@ -72,7 +72,7 @@ void setup() {
 
 void loop() {
   adcOutput res;
-  delay(100);
+  delay(30000);
 
   while (1)
   {
@@ -96,7 +96,7 @@ void loop() {
       result1 = res.ch0;
     }
   }
-
+SendThingSpeak();
 }
 
 

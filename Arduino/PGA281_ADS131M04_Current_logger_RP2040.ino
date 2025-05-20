@@ -11,7 +11,7 @@ float res;
 ADS131M04 adc;
 float result1=0;
 
-#define LED_STATUS 25
+#define LED_STATUS 25  //RasPi pico onboard LED
 
 /* Wi-Fi info */
 char ssid[] = "YourSSID";  // your network SSID (name)
@@ -22,7 +22,7 @@ WiFiMulti multi;
 int status = WL_IDLE_STATUS;  // the Wifi radio's status
 
 char server[] = "api.thingspeak.com";  // server address
-String apiKey = "Your write API Key";    // apki key
+String apiKey = "YourWriteAPIKey";    // apki key
 
 // Thingspeak
 
@@ -31,10 +31,16 @@ unsigned long lastConnectionTime = 0;    // last time you connected to the serve
 WiFiClient client;
 
 
+unsigned long prevMillis = 0;  //Onboard LED blinking timekeeping
+int LED_delay = 1000;  // Onboard LED blinking delay
+
 
 void setup() {
 
   Serial.begin(115200);
+  pinMode(LED_BUILTIN, OUTPUT);
+
+
   adc.begin(14, 12, 13, 5, 19, 3); 
 
   delay(1000);
@@ -56,11 +62,11 @@ void setup() {
 
   if (multi.run() != WL_CONNECTED) {
     Serial.println("Unable to connect to network");
-   // LED_delay = 300;
+    LED_delay = 300;
     //rp2040.reboot();
   }
   else{
-  //  LED_delay = 2000;
+    LED_delay = 2000;
   }
 
   Serial.println("");
@@ -71,6 +77,13 @@ void setup() {
 }
 
 void loop() {
+
+   if (millis() - prevMillis > LED_delay) {  //Onboard LED blinking, indicating Wifi status. Fast blinking -> Wifi not connected, slow blinking -> Wifi connected
+    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+
+    prevMillis = millis();
+  }
+
   adcOutput res;
   delay(30000);
 
@@ -96,7 +109,12 @@ void loop() {
       result1 = res.ch0;
     }
   }
-SendThingSpeak();
+  // Log Temperature to ThingSpeak every 10 min
+  if (millis() - lastThingSpeakUpdate >= 600000) { 
+
+    SendThingSpeak();
+    lastThingSpeakUpdate = millis();
+  }
 }
 
 
